@@ -2,9 +2,11 @@ const STORAGE_KEY = "codeforge-files-v1";
 const ACTIVE_KEY = "codeforge-active-v1";
 
 const pythonKeywords = ["and", "as", "assert", "async", "await", "break", "case", "class", "continue", "def", "del", "elif", "else", "except", "finally", "for", "from", "global", "if", "import", "in", "is", "lambda", "match", "nonlocal", "not", "or", "pass", "raise", "return", "try", "while", "with", "yield"];
-const pythonBuiltins = ["abs", "all", "any", "ascii", "bin", "bool", "breakpoint", "bytearray", "bytes", "callable", "chr", "classmethod", "compile", "complex", "delattr", "dict", "dir", "divmod", "enumerate", "eval", "exec", "filter", "float", "format", "frozenset", "getattr", "globals", "hasattr", "hash", "help", "hex", "id", "input", "isinstance", "issubclass", "iter", "len", "list", "locals", "map", "max", "memoryview", "min", "next", "object", "oct", "open", "ord", "pow", "print", "property", "range", "repr", "reversed", "round", "set", "setattr", "slice", "sorted", "staticmethod", "str", "sum", "super", "tuple", "type", "vars", "zip"];
+const pythonSoftKeywords = ["lazy"];
+const pythonBuiltins = ["abs", "all", "any", "ascii", "bin", "bool", "breakpoint", "bytearray", "bytes", "callable", "chr", "classmethod", "compile", "complex", "delattr", "dict", "dir", "divmod", "enumerate", "eval", "exec", "filter", "float", "format", "frozendict", "frozenset", "getattr", "globals", "hasattr", "hash", "help", "hex", "id", "input", "isinstance", "issubclass", "iter", "len", "list", "locals", "map", "max", "memoryview", "min", "next", "object", "oct", "open", "ord", "pow", "print", "property", "range", "repr", "reversed", "round", "set", "setattr", "sentinel", "slice", "sorted", "staticmethod", "str", "sum", "super", "tuple", "type", "vars", "zip"];
 const pythonMethods = ["append", "capitalize", "casefold", "clear", "copy", "count", "encode", "endswith", "extend", "find", "format", "get", "index", "insert", "items", "join", "keys", "lower", "pop", "remove", "replace", "reverse", "setdefault", "sort", "split", "splitlines", "startswith", "strip", "title", "upper", "values"];
 const pythonConstants = ["True", "False", "None", "NotImplemented", "Ellipsis", "self", "cls"];
+const pythonModernModules = ["annotationlib", "string.templatelib", "compression", "compression.zstd", "sys", "types", "typing", "dataclasses", "asyncio", "pathlib", "importlib"];
 
 const state = {
   files: loadFiles(),
@@ -117,8 +119,8 @@ function renderAll() {
   editor.disabled = !hasFile;
   $("#breadcrumbFile").textContent = hasFile ? file : "no-file";
   $("#editorFileName").textContent = hasFile ? file : "No file open";
-  $("#languageLabel").textContent = file.endsWith(".py") ? "Python" : file.endsWith(".md") ? "Markdown" : "Text";
-  $(".status-language").innerHTML = `<span class="python-dot"></span> ${file.endsWith(".py") ? "Python" : "Text"}`;
+  $("#languageLabel").textContent = file.endsWith(".py") ? "Python 3.15 syntax" : file.endsWith(".md") ? "Markdown" : "Text";
+  $(".status-language").innerHTML = `<span class="python-dot"></span> ${file.endsWith(".py") ? "Python 3.15 syntax" : "Text"}`;
 }
 
 function renderEditor() {
@@ -298,9 +300,11 @@ function getPythonCompletions() {
   const source = editor.value;
   const items = [
     ...pythonKeywords.map((value) => ({ value, kind: "K", meta: "keyword" })),
+    ...pythonSoftKeywords.map((value) => ({ value, kind: "K", meta: "Python 3.15 soft keyword" })),
     ...pythonBuiltins.map((value) => ({ value, kind: "ƒ", meta: "builtin" })),
     ...pythonMethods.map((value) => ({ value, kind: "·", meta: "method" })),
-    ...pythonConstants.map((value) => ({ value, kind: "C", meta: "constant" }))
+    ...pythonConstants.map((value) => ({ value, kind: "C", meta: "constant" })),
+    ...pythonModernModules.map((value) => ({ value, kind: "M", meta: "Python 3.14/3.15 module" }))
   ];
   const addMatches = (pattern, kind, meta) => {
     for (const match of source.matchAll(pattern)) {
