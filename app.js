@@ -183,7 +183,6 @@ function inputChanged() {
   renderEditor();
   $("#dirtyIndicator").hidden = false;
   $("#statusMessage").textContent = "Unsaved changes saved locally";
-  showAutocomplete();
 }
 
 let saveTimer;
@@ -205,6 +204,11 @@ function handleKeydown(event) {
   if (modifier && event.key.toLowerCase() === "p") {
     event.preventDefault();
     openCommandPalette();
+    return;
+  }
+  if (modifier && event.code === "Space") {
+    event.preventDefault();
+    showAutocomplete();
     return;
   }
   if (modifier && event.key === "Enter") {
