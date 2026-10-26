@@ -27,6 +27,7 @@ const tabs = $("#tabs");
 const fileTree = $("#fileTree");
 const outputLines = $("#outputLines");
 const bottomPanel = $("#bottomPanel");
+let highlightFrame;
 
 function loadFiles() {
   try {
@@ -124,6 +125,10 @@ function renderAll() {
 
 function renderEditor() {
   const source = editor.value;
+  cancelAnimationFrame(highlightFrame);
+  highlightFrame = requestAnimationFrame(() => {
+    highlighted.innerHTML = highlight(source) + (source.endsWith("\n") ? "\n" : "");
+  });
   const totalLines = Math.max(1, source.split("\n").length);
   lineNumbers.innerHTML = Array.from({ length: totalLines }, (_, index) => `<div>${index + 1}</div>`).join("");
   renderMinimap(source);
