@@ -40,6 +40,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .ghost-button, .run-button, .icon-button, .avatar-button, .activity-button, .panel-tab { border: 0; cursor: pointer; }
 .ghost-button { height: 32px; display: inline-flex; align-items: center; gap: 8px; padding: 0 11px; border: 1px solid transparent; border-radius: 6px; color: var(--text-soft); background: transparent; transition: 150ms ease; }
 .ghost-button:hover { border-color: var(--border); color: var(--text); background: var(--surface-2); }
+.file-action-button { color: var(--text-soft); }
 .button-icon, .command-icon { color: var(--cyan); font-size: 14px; }
 .shortcut-button { color: var(--text-muted); }
 .shortcut-button kbd { margin-left: 6px; color: #687582; font: 10px var(--mono); }
@@ -78,6 +79,10 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .folder-icon::before { position: absolute; left: 1px; top: -4px; width: 6px; height: 4px; border: 1px solid #9a9b70; border-bottom: 0; border-radius: 2px 2px 0 0; background: rgba(183,173,111,.16); content: ""; }
 .project-dot { width: 5px; height: 5px; margin-left: auto; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px rgba(140,214,167,.5); }
 .file-tree { padding: 3px 8px; }
+.empty-file-tree { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 30px 12px; color: var(--text-muted); text-align: center; }
+.empty-file-tree > span { color: var(--cyan); font-size: 20px; }
+.empty-file-tree strong { color: var(--text-soft); font-size: 10px; font-weight: 600; }
+.empty-file-tree small { font: 9px var(--mono); }
 .file-row { height: 34px; display: flex; align-items: center; gap: 9px; padding: 0 9px; border-radius: 5px; color: var(--text-muted); cursor: pointer; font: 11px var(--mono); transition: 120ms ease; }
 .file-row:hover { color: var(--text-soft); background: var(--surface-3); }
 .file-row.active { color: var(--text); background: rgba(116,214,208,.09); }
@@ -100,6 +105,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .editor-toolbar { height: 53px; flex: 0 0 53px; display: flex; align-items: stretch; border-bottom: 1px solid var(--border); background: #11151c; }
 .tabs { min-width: 0; flex: 1; display: flex; align-items: stretch; overflow-x: auto; scrollbar-width: none; }
 .tabs::-webkit-scrollbar { display: none; }
+.empty-tabs { display: flex; align-items: center; padding: 0 15px; color: var(--text-muted); font: 10px var(--mono); }
 .tab { position: relative; min-width: 132px; display: flex; align-items: center; gap: 8px; padding: 0 13px; border-right: 1px solid var(--border); color: var(--text-muted); background: transparent; cursor: pointer; font: 11px var(--mono); }
 .tab:hover { color: var(--text-soft); background: var(--surface-2); }
 .tab.active { color: var(--text); background: var(--surface); }
@@ -126,6 +132,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 #highlighted { display: none; color: #bfc9d3; pointer-events: none; }
 #highlighted code { display: block; min-height: 100%; }
 #editor { z-index: 1; resize: none; color: #c7d0d9; caret-color: var(--cyan-bright); background: transparent; outline: none; -webkit-text-fill-color: #c7d0d9; }
+#editor:disabled { cursor: default; opacity: .55; }
+#editor::placeholder { color: #586574; opacity: 1; }
 #editor::selection { background: rgba(116,214,208,.2); }
 .code-scroll::-webkit-scrollbar, #editor::-webkit-scrollbar { width: 9px; height: 9px; }
 .code-scroll::-webkit-scrollbar-track, #editor::-webkit-scrollbar-track { background: transparent; }

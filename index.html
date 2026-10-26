@@ -32,6 +32,8 @@
           <button class="ghost-button shortcut-button" id="commandButton" title="Open command palette (Ctrl/Cmd + P)">
             <span class="command-icon">⌘</span><span>Commands</span><kbd>⌘ P</kbd>
           </button>
+          <button class="ghost-button file-action-button" id="newFileTopButton"><span class="button-icon">＋</span> Create file</button>
+          <button class="ghost-button file-action-button" id="saveFileButton"><span class="button-icon">↓</span> Save file <kbd>⌘ S</kbd></button>
           <button class="ghost-button" id="previewButton"><span class="button-icon">◉</span> Preview</button>
           <button class="run-button" id="runButton"><span class="play-icon">▶</span> Run <kbd>⌘ ↵</kbd></button>
           <button class="avatar-button" aria-label="Workspace profile">CF</button>
@@ -84,7 +86,7 @@
                 <div class="line-numbers" id="lineNumbers" aria-hidden="true"></div>
                 <div class="code-layer">
                   <pre id="highlighted" aria-hidden="true"><code></code></pre>
-                  <textarea id="editor" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-label="Code editor"></textarea>
+                  <textarea id="editor" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="Create a .py file to start writing Python..." aria-label="Code editor"></textarea>
                   <div class="autocomplete" id="autocomplete" role="listbox" aria-label="Python completions"></div>
                 </div>
                 <div class="minimap" id="minimap" aria-hidden="true"></div>

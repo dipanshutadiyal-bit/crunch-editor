@@ -1,12 +1,6 @@
 const STORAGE_KEY = "codeforge-files-v1";
 const ACTIVE_KEY = "codeforge-active-v1";
 
-const starterFiles = {
-  "main.py": `from utils import greet\n\nname = "CodeForge"\nmessage = greet(name)\n\nprint(message)\nprint("Ready to shape the next file.")\n`,
-  "utils.py": `def greet(name: str) -> str:\n    """Return a small welcome message."""\n    return f"Hello, {name}!"\n\n\ndef add(left: int, right: int) -> int:\n    return left + right\n`,
-  "README.md": `# CodeForge\n\nA personal Python-first code editor.\n\n## Shortcuts\n\n- Run: Cmd/Ctrl + Enter\n- Save: Cmd/Ctrl + S\n- Commands: Cmd/Ctrl + P\n`
-};
-
 const pythonKeywords = ["and", "as", "assert", "async", "await", "break", "case", "class", "continue", "def", "del", "elif", "else", "except", "finally", "for", "from", "global", "if", "import", "in", "is", "lambda", "match", "nonlocal", "not", "or", "pass", "raise", "return", "try", "while", "with", "yield"];
 const pythonBuiltins = ["abs", "all", "any", "ascii", "bin", "bool", "breakpoint", "bytearray", "bytes", "callable", "chr", "classmethod", "compile", "complex", "delattr", "dict", "dir", "divmod", "enumerate", "eval", "exec", "filter", "float", "format", "frozenset", "getattr", "globals", "hasattr", "hash", "help", "hex", "id", "input", "isinstance", "issubclass", "iter", "len", "list", "locals", "map", "max", "memoryview", "min", "next", "object", "oct", "open", "ord", "pow", "print", "property", "range", "repr", "reversed", "round", "set", "setattr", "slice", "sorted", "staticmethod", "str", "sum", "super", "tuple", "type", "vars", "zip"];
 const pythonMethods = ["append", "capitalize", "casefold", "clear", "copy", "count", "encode", "endswith", "extend", "find", "format", "get", "index", "insert", "items", "join", "keys", "lower", "pop", "remove", "replace", "reverse", "setdefault", "sort", "split", "splitlines", "startswith", "strip", "title", "upper", "values"];
@@ -14,8 +8,8 @@ const pythonConstants = ["True", "False", "None", "NotImplemented", "Ellipsis", 
 
 const state = {
   files: loadFiles(),
-  activeFile: localStorage.getItem(ACTIVE_KEY) || "main.py",
-  openFiles: ["main.py", "utils.py"],
+  activeFile: localStorage.getItem(ACTIVE_KEY) || "",
+  openFiles: [],
   autocompleteIndex: 0,
   autocompleteItems: [],
   toastTimer: null,
@@ -37,13 +31,18 @@ const bottomPanel = $("#bottomPanel");
 function loadFiles() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (saved && typeof saved === "object") return { ...starterFiles, ...saved };
-  } catch { /* Use the starter workspace when storage is unavailable. */ }
-  return { ...starterFiles };
+    if (saved && typeof saved === "object") {
+      const oldSampleFiles = new Set(["main.py", "utils.py", "readme.md"]);
+      return Object.fromEntries(Object.entries(saved).filter(([fileName]) => fileName.toLowerCase().endsWith(".py") && !oldSampleFiles.has(fileName.toLowerCase())));
+    }
+  } catch { /* Start with an empty workspace when storage is unavailable. */ }
+  return {};
 }
 
 function saveFiles() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.files));
+  const pythonFiles = Object.fromEntries(Object.entries(state.files).filter(([fileName]) => fileName.toLowerCase().endsWith(".py")));
+  state.files = pythonFiles;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(pythonFiles));
   localStorage.setItem(ACTIVE_KEY, state.activeFile);
 }
 
@@ -58,24 +57,26 @@ function extensionClass(fileName) {
 }
 
 function renderFileTree() {
-  fileTree.innerHTML = Object.keys(state.files).map((fileName) => `
+  const fileNames = Object.keys(state.files);
+  fileTree.innerHTML = fileNames.length ? fileNames.map((fileName) => `
     <div class="file-row ${fileName === state.activeFile ? "active" : ""}" data-file="${escapeHtml(fileName)}">
       <span class="file-ext ${extensionClass(fileName)}">${extFor(fileName)}</span>
       <span class="file-name">${escapeHtml(fileName)}</span>
       ${fileName === state.activeFile ? '<span class="file-pin">●</span>' : ""}
     </div>
-  `).join("");
+  `).join("") : '<div class="empty-file-tree"><span>＋</span><strong>No Python files yet</strong><small>Use Create file to begin.</small></div>';
   fileTree.querySelectorAll(".file-row").forEach((row) => row.addEventListener("click", () => openFile(row.dataset.file)));
 }
 
 function renderTabs() {
-  tabs.innerHTML = state.openFiles.filter((file) => state.files[file]).map((fileName) => `
+  const openTabs = state.openFiles.filter((file) => Object.hasOwn(state.files, file));
+  tabs.innerHTML = openTabs.length ? openTabs.map((fileName) => `
     <div class="tab ${fileName === state.activeFile ? "active" : ""}" data-file="${escapeHtml(fileName)}">
       <span class="tab-file-icon ${extensionClass(fileName)}">${extFor(fileName).slice(0, 2)}</span>
       <span>${escapeHtml(fileName)}</span>
       <button class="tab-close" data-close="${escapeHtml(fileName)}" aria-label="Close ${escapeHtml(fileName)}">×</button>
     </div>
-  `).join("");
+  `).join("") : '<div class="empty-tabs">Create a .py file to start</div>';
   tabs.querySelectorAll(".tab").forEach((tab) => tab.addEventListener("click", (event) => {
     if (!event.target.closest(".tab-close")) openFile(tab.dataset.file);
   }));
@@ -86,7 +87,7 @@ function renderTabs() {
 }
 
 function openFile(fileName) {
-  if (!state.files[fileName]) return;
+  if (!Object.hasOwn(state.files, fileName)) return;
   state.activeFile = fileName;
   if (!state.openFiles.includes(fileName)) state.openFiles.push(fileName);
   editor.value = state.files[fileName];
@@ -98,15 +99,11 @@ function openFile(fileName) {
 }
 
 function closeFile(fileName) {
-  if (state.openFiles.length === 1) {
-    showToast("Keep at least one file open.");
-    return;
-  }
   const index = state.openFiles.indexOf(fileName);
   state.openFiles = state.openFiles.filter((file) => file !== fileName);
   if (state.activeFile === fileName) {
-    state.activeFile = state.openFiles[Math.max(0, index - 1)];
-    editor.value = state.files[state.activeFile];
+    state.activeFile = state.openFiles.length ? state.openFiles[Math.max(0, index - 1)] : "";
+    editor.value = state.activeFile ? state.files[state.activeFile] : "";
   }
   saveFiles();
   renderAll();
@@ -117,8 +114,10 @@ function renderAll() {
   renderTabs();
   renderEditor();
   const file = state.activeFile;
-  $("#breadcrumbFile").textContent = file;
-  $("#editorFileName").textContent = file;
+  const hasFile = Boolean(file && Object.hasOwn(state.files, file));
+  editor.disabled = !hasFile;
+  $("#breadcrumbFile").textContent = hasFile ? file : "no-file";
+  $("#editorFileName").textContent = hasFile ? file : "No file open";
   $("#languageLabel").textContent = file.endsWith(".py") ? "Python" : file.endsWith(".md") ? "Markdown" : "Text";
   $(".status-language").innerHTML = `<span class="python-dot"></span> ${file.endsWith(".py") ? "Python" : "Text"}`;
 }
@@ -337,6 +336,10 @@ function hideAutocomplete() {
 }
 
 function runActiveFile() {
+  if (!state.activeFile) {
+    showToast("Create a .py file before running code.");
+    return;
+  }
   bottomPanel.classList.remove("collapsed");
   $("#executionStatus").textContent = "Preparing preview…";
   outputLines.innerHTML = `<div class="output-line meta">$ codeforge run ${state.activeFile}</div><div class="output-line meta">· Browser-side preview simulation</div>`;
@@ -372,21 +375,37 @@ function previewActiveFile() {
 }
 
 function createFile() {
-  const name = window.prompt("New file name", "scratch.py");
+  const name = window.prompt("New Python file name (must end with .py)", "script.py");
   if (!name) return;
   const cleanName = name.trim().replace(/[^A-Za-z0-9._-]/g, "-");
   if (!cleanName) return;
+  if (!cleanName.toLowerCase().endsWith(".py")) {
+    showToast("File was not created. The name must end with .py");
+    return;
+  }
   if (state.files[cleanName]) return openFile(cleanName);
-  state.files[cleanName] = cleanName.endsWith(".py") ? "def main():\n    pass\n\n\nif __name__ == \"__main__\":\n    main()\n" : "";
+  state.files[cleanName] = "";
   state.openFiles.push(cleanName);
   saveFiles();
   openFile(cleanName);
   showToast(`${cleanName} created.`);
 }
 
+function saveActiveFile() {
+  if (!state.activeFile) {
+    showToast("Create a .py file before saving.");
+    return;
+  }
+  state.files[state.activeFile] = editor.value;
+  saveFiles();
+  $("#dirtyIndicator").hidden = true;
+  $("#statusMessage").textContent = "File saved locally";
+  showToast(`${state.activeFile} saved locally.`);
+}
+
 const commands = [
   { label: "Run active file", shortcut: "⌘ ↵", action: runActiveFile },
-  { label: "Save active file", shortcut: "⌘ S", action: () => { saveFiles(); $("#dirtyIndicator").hidden = true; showToast("All changes saved locally."); } },
+  { label: "Save active file", shortcut: "⌘ S", action: saveActiveFile },
   { label: "Create new file", shortcut: "", action: createFile },
   { label: "Toggle output panel", shortcut: "", action: () => bottomPanel.classList.toggle("collapsed") },
   { label: "Focus editor", shortcut: "", action: () => editor.focus() }
@@ -433,6 +452,8 @@ editor.addEventListener("scroll", syncScroll);
 $("#runButton").addEventListener("click", runActiveFile);
 $("#previewButton").addEventListener("click", previewActiveFile);
 $("#newFileButton").addEventListener("click", createFile);
+$("#newFileTopButton").addEventListener("click", createFile);
+$("#saveFileButton").addEventListener("click", saveActiveFile);
 $("#commandButton").addEventListener("click", openCommandPalette);
 $("#collapsePanel").addEventListener("click", () => bottomPanel.classList.toggle("collapsed"));
 document.querySelectorAll(".panel-tab").forEach((tab) => tab.addEventListener("click", () => {
@@ -455,8 +476,9 @@ document.addEventListener("keydown", (event) => {
 
 autoSelectInitialFile();
 function autoSelectInitialFile() {
-  if (!state.files[state.activeFile]) state.activeFile = "main.py";
-  editor.value = state.files[state.activeFile];
+  state.openFiles = Object.keys(state.files);
+  if (!state.files[state.activeFile]) state.activeFile = state.openFiles[0] || "";
+  editor.value = state.activeFile ? state.files[state.activeFile] : "";
   saveFiles();
   renderAll();
 }
