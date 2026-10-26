@@ -20,7 +20,54 @@ const state = {
 };
 
 const $ = (selector) => document.querySelector(selector);
-const editor = $("#editor");
+const editorTextarea = $("#editor");
+let suppressEditorChange = false;
+const codeMirror = window.CodeMirror.fromTextArea(editorTextarea, {
+  mode: "python",
+  theme: "crunch-light",
+  lineNumbers: false,
+  indentUnit: 4,
+  tabSize: 4,
+  indentWithTabs: false,
+  smartIndent: true,
+  matchBrackets: true,
+  autoCloseBrackets: true,
+  lineWrapping: false,
+  viewportMargin: Infinity
+});
+const editor = {
+  get value() { return codeMirror.getValue(); },
+  set value(value) {
+    suppressEditorChange = true;
+    codeMirror.setValue(value || "");
+    suppressEditorChange = false;
+  },
+  get selectionStart() { return codeMirror.indexFromPos(codeMirror.getCursor("from")); },
+  set selectionStart(value) { codeMirror.setCursor(codeMirror.posFromIndex(value)); },
+  get selectionEnd() { return codeMirror.indexFromPos(codeMirror.getCursor("to")); },
+  set selectionEnd(value) { codeMirror.setSelection(codeMirror.posFromIndex(this.selectionStart), codeMirror.posFromIndex(value)); },
+  get scrollTop() { return codeMirror.getScrollInfo().top; },
+  set scrollTop(value) { codeMirror.scrollTo(undefined, value); },
+  get scrollLeft() { return codeMirror.getScrollInfo().left; },
+  set scrollLeft(value) { codeMirror.scrollTo(value, undefined); },
+  get disabled() { return codeMirror.getOption("readOnly") === "nocursor"; },
+  set disabled(value) { codeMirror.setOption("readOnly", value ? "nocursor" : false); },
+  focus() { codeMirror.focus(); },
+  setRangeText(text, start, end, selectionMode = "end") {
+    const from = codeMirror.posFromIndex(start);
+    const to = codeMirror.posFromIndex(end);
+    codeMirror.replaceRange(text, from, to, "+input");
+    const cursor = codeMirror.posFromIndex(start + text.length);
+    codeMirror.setCursor(cursor);
+    if (selectionMode === "select") codeMirror.setSelection(from, cursor);
+  },
+  addEventListener(type, handler) {
+    if (type === "input") codeMirror.on("change", () => { if (!suppressEditorChange) handler(); });
+    else if (type === "scroll") codeMirror.on("scroll", handler);
+    else if (type === "select") codeMirror.on("cursorActivity", handler);
+    else codeMirror.on(type, (_instance, event) => handler(event));
+  }
+};
 const lineNumbers = $("#lineNumbers");
 const minimap = $("#minimap");
 const autocomplete = $("#autocomplete");
@@ -218,55 +265,9 @@ function handleKeydown(event) {
     runActiveFile();
     return;
   }
-  if (event.key === "Tab") {
-    event.preventDefault();
-    const start = editor.selectionStart;
-    const end = editor.selectionEnd;
-    if (event.shiftKey) {
-      const lineStart = editor.value.lastIndexOf("\n", start - 1) + 1;
-      if (editor.value.slice(lineStart, lineStart + 4) === "    ") {
-        editor.setRangeText("", lineStart, lineStart + 4, "end");
-      }
-    } else if (start === end) {
-      editor.setRangeText("    ", start, end, "end");
-    } else {
-      const selected = editor.value.slice(start, end);
-      editor.setRangeText(selected.split("\n").map((line) => `    ${line}`).join("\n"), start, end, "end");
-    }
-    inputChanged();
-    return;
-  }
   if (event.key === "Enter" && autocomplete.classList.contains("visible")) {
     event.preventDefault();
     acceptCompletion(state.autocompleteItems[state.autocompleteIndex]);
-    return;
-  }
-  if (event.key === "Enter") {
-    event.preventDefault();
-    const start = editor.selectionStart;
-    const lineStart = editor.value.lastIndexOf("\n", start - 1) + 1;
-    const currentLine = editor.value.slice(lineStart, start);
-    const baseIndent = currentLine.match(/^\s*/)?.[0] || "";
-    const stripped = currentLine.trim();
-    const shouldIndent = stripped.endsWith(":") || /^(if|elif|else|for|while|def|class|try|except|finally|with)\b/.test(stripped) && stripped.endsWith(":");
-    const nextLine = `\n${baseIndent}${shouldIndent ? "    " : ""}`;
-    editor.setRangeText(nextLine, start, editor.selectionEnd, "end");
-    inputChanged();
-    return;
-  }
-  if (["(", "[", "{", "\"", "'"].includes(event.key) && editor.selectionStart === editor.selectionEnd) {
-    const pair = { "(": ")", "[": "]", "{": "}", "\"": "\"", "'": "'" }[event.key];
-    if (editor.value[editor.selectionStart] === pair) {
-      event.preventDefault();
-      editor.selectionStart += 1;
-      editor.selectionEnd = editor.selectionStart;
-      return;
-    }
-    event.preventDefault();
-    editor.setRangeText(event.key + pair, editor.selectionStart, editor.selectionEnd, "end");
-    editor.selectionStart -= 1;
-    editor.selectionEnd = editor.selectionStart;
-    inputChanged();
     return;
   }
   if (event.key === "Escape") hideAutocomplete();
