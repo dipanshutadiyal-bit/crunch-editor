@@ -33,7 +33,11 @@ const codeMirror = window.CodeMirror.fromTextArea(editorTextarea, {
   matchBrackets: true,
   autoCloseBrackets: true,
   lineWrapping: false,
-  viewportMargin: Infinity
+  viewportMargin: Infinity,
+  extraKeys: {
+    "Ctrl-Space": () => showAutocomplete(),
+    "Cmd-Space": () => showAutocomplete()
+  }
 });
 const editor = {
   get value() { return codeMirror.getValue(); },
@@ -232,6 +236,7 @@ function inputChanged() {
   renderEditor();
   $("#dirtyIndicator").hidden = false;
   $("#statusMessage").textContent = "Unsaved changes saved locally";
+  showAutocomplete();
 }
 
 let saveTimer;
