@@ -335,35 +335,32 @@ function hideAutocomplete() {
   autocomplete.innerHTML = "";
 }
 
-function runActiveFile() {
+async function runActiveFile() {
   if (!state.activeFile) {
     showToast("Create a .py file before running code.");
     return;
   }
   bottomPanel.classList.remove("collapsed");
-  $("#executionStatus").textContent = "Preparing preview…";
-  outputLines.innerHTML = `<div class="output-line meta">$ codeforge run ${state.activeFile}</div><div class="output-line meta">· Browser-side preview simulation</div>`;
+  $("#executionStatus").textContent = "Running Python…";
+  outputLines.innerHTML = `<div class="output-line meta">$ python ${escapeHtml(state.activeFile)}</div><div class="output-line meta">· Local Python 3 runner · 3 second safety timeout</div>`;
   $("#outputCount").textContent = "…";
-  setTimeout(() => {
-    const source = editor.value;
-    const outputs = extractPrintOutputs(source);
-    const duration = Math.max(12, Math.min(84, source.length));
-    outputLines.innerHTML = `<div class="output-line meta">$ codeforge run ${escapeHtml(state.activeFile)}</div><div class="output-line meta">· Python 3.12 profile · ${source.split("\n").length} lines · ${duration}ms</div>${outputs.map((line) => `<div class="output-line">${escapeHtml(line)}</div>`).join("")}<div class="output-line success">✓ Process finished with exit code 0</div>`;
-    $("#outputCount").textContent = String(outputs.length + 1);
-    $("#executionStatus").textContent = "Preview finished successfully";
-    $("#statusMessage").textContent = "Preview finished · exit code 0";
-  }, 360);
-}
-
-function extractPrintOutputs(source) {
-  const matches = [...source.matchAll(/print\(([^\n]*)\)/g)];
-  if (!matches.length) return ["No console output. Add print(...) to see a result here."];
-  return matches.map((match) => {
-    const value = match[1].trim();
-    if (/^(["']).*\1$/.test(value)) return value.slice(1, -1);
-    if (/^f["']/.test(value)) return "Hello, CodeForge!";
-    return `↳ ${value.replace(/["']/g, "")}`;
-  });
+  try {
+    const response = await fetch("/api/run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: editor.value })
+    });
+    const result = await response.json();
+    const output = `${result.stdout || ""}${result.stderr || ""}`.trimEnd();
+    const lines = output ? output.split("\n") : ["No console output."];
+    outputLines.innerHTML = `<div class="output-line meta">$ python ${escapeHtml(state.activeFile)}</div><div class="output-line meta">· Local Python 3 runner · ${editor.value.split("\n").length} lines</div>${lines.map((line) => `<div class="output-line ${result.ok ? "" : "error-line"}">${escapeHtml(line)}</div>`).join("")}<div class="output-line ${result.ok ? "success" : "error-line"}">${result.ok ? "✓ Process finished with exit code 0" : "✕ Process stopped with an error"}</div>`;
+    $("#outputCount").textContent = String(lines.length + 1);
+    $("#executionStatus").textContent = result.ok ? "Run finished successfully" : "Run finished with errors";
+    $("#statusMessage").textContent = result.ok ? "Run finished · exit code 0" : "Run finished · inspect output";
+  } catch (error) {
+    outputLines.innerHTML = `<div class="output-line error-line">Could not connect to the Python runner.</div><div class="output-line meta">${escapeHtml(error.message)}</div>`;
+    $("#executionStatus").textContent = "Runner unavailable";
+  }
 }
 
 function previewActiveFile() {

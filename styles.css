@@ -226,3 +226,50 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
   .editor-hints span:nth-child(2) { display: none; }
   .status-message, .status-sync { display: none; }
 }
+
+/* CodeForge light workspace */
+:root {
+  --bg: #f4f7fb;
+  --surface: #ffffff;
+  --surface-2: #f2f6fa;
+  --surface-3: #e8eef5;
+  --border: rgba(55, 76, 98, 0.14);
+  --border-strong: rgba(55, 76, 98, 0.24);
+  --text: #172434;
+  --text-soft: #506174;
+  --text-muted: #7b8b9c;
+  --cyan: #168b91;
+  --cyan-soft: rgba(22, 139, 145, 0.11);
+  --cyan-bright: #0d6870;
+  --amber: #b97816;
+  --violet: #7652ad;
+  --green: #267a4c;
+  --red: #c23d45;
+}
+
+body { background: var(--bg); }
+.app-shell { background: var(--bg); }
+.topbar { background: rgba(255,255,255,.94); }
+.activity-rail { background: #edf2f7; }
+.sidebar { background: #f8fafc; }
+.editor-area { background: #ffffff; }
+.editor-toolbar { background: #f8fafc; }
+.editor-frame { background: #fbfdff; }
+.editor-headerline { background: rgba(248,250,252,.85); }
+.code-layer { background: transparent; }
+.line-numbers { color: #9aa9b8; }
+.editor-fade { background: linear-gradient(transparent, rgba(251,253,255,.9)); }
+.minimap { background: rgba(235,241,247,.65); }
+.bottom-panel { background: #f8fafc; }
+.statusbar { color: #718196; background: #edf2f7; border-top-color: rgba(55,76,98,.16); }
+.toast { color: var(--text); background: #ffffff; box-shadow: 0 12px 30px rgba(38,57,77,.17); }
+.command-overlay { background: rgba(40,54,70,.25); }
+.command-dialog { background: #ffffff; box-shadow: 0 25px 80px rgba(38,57,77,.24); }
+.command-item:hover, .command-item.selected { color: var(--text); background: var(--cyan-soft); }
+.output-line.error-line { color: var(--red); }
+.token-keyword { color: #7652ad; }
+.token-string { color: #367b42; }
+.token-comment { color: #8392a1; }
+.token-number { color: #a15e13; }
+.token-function, .token-class { color: #087b83; }
+.token-builtin { color: #ae5c20; }

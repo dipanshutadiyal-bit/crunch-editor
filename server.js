@@ -1,10 +1,13 @@
 import { createServer } from "node:http";
+import { execFile } from "node:child_process";
 import { readFile, stat } from "node:fs/promises";
 import { extname, join, normalize, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)));
 const port = Number(process.env.PORT || 3000);
+const runPython = promisify(execFile);
 const mime = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -36,8 +39,48 @@ async function sendFile(res, filePath) {
   res.end(body);
 }
 
+function sendJson(res, status, payload) {
+  const body = Buffer.from(JSON.stringify(payload));
+  res.writeHead(status, {
+    "Content-Type": "application/json; charset=utf-8",
+    "Content-Length": body.length
+  });
+  res.end(body);
+}
+
+async function readBody(req) {
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of req) {
+    size += chunk.length;
+    if (size > 100_000) throw new Error("Code is too large for the local runner.");
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks).toString("utf8");
+}
+
 const server = createServer(async (req, res) => {
   try {
+    if (req.method === "POST" && new URL(req.url || "/", "http://localhost").pathname === "/api/run") {
+      try {
+        const { code } = JSON.parse(await readBody(req));
+        if (typeof code !== "string") return sendJson(res, 400, { ok: false, error: "Request must contain Python code." });
+        const result = await runPython("python3", ["-I", "-c", code], {
+          timeout: 3000,
+          maxBuffer: 256 * 1024,
+          env: { ...process.env, PYTHONIOENCODING: "utf-8" }
+        });
+        return sendJson(res, 200, { ok: true, stdout: result.stdout, stderr: result.stderr });
+      } catch (error) {
+        const timedOut = error?.killed || error?.signal === "SIGTERM";
+        return sendJson(res, 200, {
+          ok: false,
+          timedOut,
+          stdout: error?.stdout || "",
+          stderr: timedOut ? "Execution stopped after 3 seconds (possible infinite loop)." : (error?.stderr || error?.message || "Python execution failed.")
+        });
+      }
+    }
     const target = safePath(req.url || "/");
     if (!target) {
       res.writeHead(403);
