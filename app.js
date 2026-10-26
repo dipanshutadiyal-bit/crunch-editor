@@ -8,8 +8,9 @@ const starterFiles = {
 };
 
 const pythonKeywords = ["and", "as", "assert", "async", "await", "break", "case", "class", "continue", "def", "del", "elif", "else", "except", "finally", "for", "from", "global", "if", "import", "in", "is", "lambda", "match", "nonlocal", "not", "or", "pass", "raise", "return", "try", "while", "with", "yield"];
-const pythonBuiltins = ["abs", "all", "any", "bool", "dict", "enumerate", "filter", "float", "format", "input", "int", "len", "list", "map", "max", "min", "open", "print", "range", "set", "sorted", "str", "sum", "tuple", "type", "zip"];
-const pythonMethods = ["append", "capitalize", "count", "format", "items", "join", "keys", "lower", "replace", "split", "strip", "upper", "values"];
+const pythonBuiltins = ["abs", "all", "any", "ascii", "bin", "bool", "breakpoint", "bytearray", "bytes", "callable", "chr", "classmethod", "compile", "complex", "delattr", "dict", "dir", "divmod", "enumerate", "eval", "exec", "filter", "float", "format", "frozenset", "getattr", "globals", "hasattr", "hash", "help", "hex", "id", "input", "isinstance", "issubclass", "iter", "len", "list", "locals", "map", "max", "memoryview", "min", "next", "object", "oct", "open", "ord", "pow", "print", "property", "range", "repr", "reversed", "round", "set", "setattr", "slice", "sorted", "staticmethod", "str", "sum", "super", "tuple", "type", "vars", "zip"];
+const pythonMethods = ["append", "capitalize", "casefold", "clear", "copy", "count", "encode", "endswith", "extend", "find", "format", "get", "index", "insert", "items", "join", "keys", "lower", "pop", "remove", "replace", "reverse", "setdefault", "sort", "split", "splitlines", "startswith", "strip", "title", "upper", "values"];
+const pythonConstants = ["True", "False", "None", "NotImplemented", "Ellipsis", "self", "cls"];
 
 const state = {
   files: loadFiles(),
@@ -124,7 +125,6 @@ function renderAll() {
 
 function renderEditor() {
   const source = editor.value;
-  highlighted.innerHTML = highlight(source) + (source.endsWith("\n") ? "\n" : "");
   const totalLines = Math.max(1, source.split("\n").length);
   lineNumbers.innerHTML = Array.from({ length: totalLines }, (_, index) => `<div>${index + 1}</div>`).join("");
   renderMinimap(source);
@@ -182,11 +182,17 @@ function updateCursorPosition() {
 
 function inputChanged() {
   state.files[state.activeFile] = editor.value;
-  saveFiles();
+  scheduleSave();
   renderEditor();
   $("#dirtyIndicator").hidden = false;
   $("#statusMessage").textContent = "Unsaved changes saved locally";
   showAutocomplete();
+}
+
+let saveTimer;
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveFiles, 180);
 }
 
 function handleKeydown(event) {
@@ -245,8 +251,8 @@ function handleKeydown(event) {
     inputChanged();
     return;
   }
-  if (["(", "[", "{"].includes(event.key) && editor.selectionStart === editor.selectionEnd) {
-    const pair = { "(": ")", "[": "]", "{": "}" }[event.key];
+  if (["(", "[", "{", "\"", "'"].includes(event.key) && editor.selectionStart === editor.selectionEnd) {
+    const pair = { "(": ")", "[": "]", "{": "}", "\"": "\"", "'": "'" }[event.key];
     event.preventDefault();
     editor.setRangeText(event.key + pair, editor.selectionStart, editor.selectionEnd, "end");
     editor.selectionStart -= 1;
@@ -273,12 +279,35 @@ function showAutocomplete() {
   const match = before.match(/[A-Za-z_]\w*$/);
   if (!match || match[0].length < 1) return hideAutocomplete();
   const prefix = match[0].toLowerCase();
-  const all = [...pythonKeywords.map((value) => ({ value, kind: "K", meta: "keyword" })), ...pythonBuiltins.map((value) => ({ value, kind: "ƒ", meta: "builtin" })), ...pythonMethods.map((value) => ({ value, kind: "·", meta: "method" }))];
-  state.autocompleteItems = all.filter((item) => item.value.startsWith(prefix) && item.value !== match[0]).slice(0, 7);
+  const all = getPythonCompletions();
+  state.autocompleteItems = all.filter((item) => item.value.toLowerCase().startsWith(prefix) && item.value !== match[0]).slice(0, 10);
   state.autocompleteIndex = 0;
   if (!state.autocompleteItems.length) return hideAutocomplete();
   renderAutocomplete();
   autocomplete.classList.add("visible");
+}
+
+function getPythonCompletions() {
+  const source = editor.value;
+  const items = [
+    ...pythonKeywords.map((value) => ({ value, kind: "K", meta: "keyword" })),
+    ...pythonBuiltins.map((value) => ({ value, kind: "ƒ", meta: "builtin" })),
+    ...pythonMethods.map((value) => ({ value, kind: "·", meta: "method" })),
+    ...pythonConstants.map((value) => ({ value, kind: "C", meta: "constant" }))
+  ];
+  const addMatches = (pattern, kind, meta) => {
+    for (const match of source.matchAll(pattern)) {
+      const value = match[1] || match[2];
+      if (value) items.push({ value, kind, meta });
+    }
+  };
+  addMatches(/\bdef\s+([A-Za-z_]\w*)/g, "ƒ", "function");
+  addMatches(/\bclass\s+([A-Za-z_]\w*)/g, "C", "class");
+  addMatches(/\b(?:from\s+[\w.]+\s+import|import)\s+([A-Za-z_]\w*)/g, "M", "import");
+  addMatches(/^\s*([A-Za-z_]\w*)\s*=|\bfor\s+([A-Za-z_]\w*)\s+in\b/g, "V", "variable");
+  const unique = new Map();
+  items.forEach((item) => { if (!unique.has(item.value)) unique.set(item.value, item); });
+  return [...unique.values()];
 }
 
 function renderAutocomplete() {
