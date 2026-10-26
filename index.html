@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f1117" />
+    <meta name="description" content="CodeForge is a personal Python-first code editor." />
+    <title>CodeForge Editor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-block" aria-label="CodeForge home">
+          <div class="brand-mark" aria-hidden="true"><span>&lt;</span><i></i><span>/&gt;</span></div>
+          <div>
+            <div class="brand-name">CodeForge</div>
+            <div class="brand-caption">personal dev bench</div>
+          </div>
+        </div>
+
+        <div class="breadcrumb" aria-label="Current file path">
+          <span class="breadcrumb-muted">workspace</span>
+          <span class="breadcrumb-slash">/</span>
+          <span id="breadcrumbFile">main.py</span>
+        </div>
+
+        <div class="topbar-actions">
+          <button class="ghost-button shortcut-button" id="commandButton" title="Open command palette (Ctrl/Cmd + P)">
+            <span class="command-icon">⌘</span><span>Command palette</span><kbd>⌘ P</kbd>
+          </button>
+          <button class="ghost-button" id="previewButton"><span class="button-icon">◉</span> Preview</button>
+          <button class="run-button" id="runButton"><span class="play-icon">▶</span> Run <kbd>⌘ ↵</kbd></button>
+          <button class="avatar-button" aria-label="Workspace profile">CF</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="activity-rail" aria-label="Activity bar">
+          <button class="activity-button active" title="Explorer" aria-label="Explorer"><span class="rail-icon explorer-icon"></span></button>
+          <button class="activity-button" title="Search" aria-label="Search"><span class="rail-icon search-icon"></span></button>
+          <button class="activity-button" title="Source control" aria-label="Source control"><span class="rail-icon branch-icon"></span><b>2</b></button>
+          <div class="rail-spacer"></div>
+          <button class="activity-button" title="Settings" aria-label="Settings"><span class="rail-icon settings-icon"></span></button>
+          <div class="rail-version">v0.1</div>
+        </aside>
+
+        <aside class="sidebar" aria-label="Project explorer">
+          <div class="sidebar-header">
+            <div class="eyebrow">Explorer</div>
+            <button class="icon-button" id="newFileButton" title="New file" aria-label="New file">＋</button>
+          </div>
+          <div class="project-heading"><span class="chevron open">›</span><span class="folder-icon"></span><span>CODEFORGE</span><span class="project-dot"></span></div>
+          <div class="file-tree" id="fileTree"></div>
+          <div class="sidebar-footer">
+            <div class="workspace-card">
+              <div class="status-dot"></div>
+              <div><strong>Local workspace</strong><span>Saved in this browser</span></div>
+              <button class="more-button" aria-label="Workspace options">•••</button>
+            </div>
+          </div>
+        </aside>
+
+        <section class="editor-area" aria-label="Editor workspace">
+          <div class="editor-toolbar">
+            <div class="tabs" id="tabs"></div>
+            <div class="editor-tools">
+              <span class="language-pill"><span class="python-dot"></span><span id="languageLabel">Python</span></span>
+              <button class="icon-button" id="splitButton" title="Split editor" aria-label="Split editor">▦</button>
+              <button class="icon-button" id="moreEditorButton" title="More editor actions" aria-label="More editor actions">•••</button>
+            </div>
+          </div>
+
+          <div class="editor-main">
+            <div class="editor-headerline">
+              <div class="file-context"><span class="file-symbol">●</span><span id="editorFileName">main.py</span><span class="dirty-indicator" id="dirtyIndicator" hidden>•</span></div>
+              <div class="editor-hints"><span>Spaces: 4</span><span>UTF-8</span><span>LF</span></div>
+            </div>
+            <div class="editor-frame">
+              <div class="code-scroll" id="codeScroll">
+                <div class="line-numbers" id="lineNumbers" aria-hidden="true"></div>
+                <div class="code-layer">
+                  <pre id="highlighted" aria-hidden="true"><code></code></pre>
+                  <textarea id="editor" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-label="Code editor"></textarea>
+                  <div class="autocomplete" id="autocomplete" role="listbox" aria-label="Python completions"></div>
+                </div>
+                <div class="minimap" id="minimap" aria-hidden="true"></div>
+              </div>
+              <div class="editor-fade"></div>
+            </div>
+          </div>
+
+          <section class="bottom-panel" id="bottomPanel" aria-label="Output panel">
+            <div class="panel-tabs">
+              <button class="panel-tab active" data-panel="output">Output <span class="panel-count" id="outputCount">0</span></button>
+              <button class="panel-tab" data-panel="problems">Problems <span class="problem-count">0</span></button>
+              <div class="panel-actions"><span class="execution-status"><span class="status-dot"></span><span id="executionStatus">Ready when you are</span></span><button class="panel-collapse" id="collapsePanel" title="Collapse panel">⌄</button></div>
+            </div>
+            <div class="panel-content" id="panelContent">
+              <div class="output-view" id="outputView">
+                <div class="output-summary"><span class="terminal-glyph">›_</span><div><strong>Run output</strong><span>Browser preview · Python 3.12 profile</span></div></div>
+                <div class="output-lines" id="outputLines"><div class="empty-output"><span class="empty-icon">◌</span><strong>No runs yet</strong><span>Press Run or <kbd>⌘ ↵</kbd> to preview your file.</span></div></div>
+              </div>
+              <div class="problems-view" id="problemsView" hidden><div class="empty-problems"><span>✓</span><strong>No problems detected</strong><span>CodeForge will surface editor diagnostics here.</span></div></div>
+            </div>
+          </section>
+        </section>
+      </main>
+
+      <footer class="statusbar">
+        <div class="status-left"><span class="status-branch">⑂ main</span><span class="status-sync">↕ 0</span><span class="status-message" id="statusMessage">All changes saved locally</span></div>
+        <div class="status-right"><span id="cursorPosition">Ln 1, Col 1</span><span>Spaces: 4</span><span>UTF-8</span><span class="status-language"><span class="python-dot"></span> Python</span><span class="status-bell">♧</span></div>
+      </footer>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <div class="command-overlay" id="commandOverlay" hidden>
+      <div class="command-dialog" role="dialog" aria-modal="true" aria-label="Command palette">
+        <div class="command-search"><span>⌕</span><input id="commandInput" placeholder="Type a command..." autocomplete="off" /></div>
+        <div class="command-list" id="commandList"></div>
+        <div class="command-footer"><span>↑↓ to navigate</span><span>↵ to select</span><span>esc to close</span></div>
+      </div>
+    </div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
