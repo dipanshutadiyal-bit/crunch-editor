@@ -1,4 +1,4 @@
-# CodeForge Editor TODO
+# Crunch Editor TODO
 
 ## 1. Deliver a focused VS Code-inspired Python workspace
 - The product is a browser-based custom code editor with a polished dark developer workspace.

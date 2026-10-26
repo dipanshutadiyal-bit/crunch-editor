@@ -111,10 +111,10 @@ const server = createServer(async (req, res) => {
   } catch (error) {
     console.error(error);
     res.writeHead(500, { "Content-Type": "text/plain; charset=utf-8" });
-    res.end("CodeForge could not serve this request.");
+    res.end("Crunch could not serve this request.");
   }
 });
 
 server.listen(port, "0.0.0.0", () => {
-  console.log(`CodeForge Editor listening on http://0.0.0.0:${port}`);
+  console.log(`Crunch Editor listening on http://0.0.0.0:${port}`);
 });

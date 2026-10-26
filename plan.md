@@ -1,4 +1,4 @@
-# CodeForge Editor Plan
+# Crunch Editor Plan
 
 ## Product scope
 Build a browser-based custom code editor focused on Python, inspired by the productive layout and interaction patterns of VS Code without copying its branding. The first version is client-only and stores the working files in browser localStorage so it is immediately usable without an account or server.
@@ -36,7 +36,7 @@ Build a browser-based custom code editor focused on Python, inspired by the prod
 
 **Layout Paradigm:** A left tool rail anchors navigation, a narrow project tree occupies the sidebar, and the main editor expands into a broad workbench with a right-edge minimap and a docked output tray. The hierarchy follows the developer’s gaze rather than centering content.
 
-**Signature Elements:** A cyan “spark” mark in the CodeForge wordmark; tiny telemetry labels such as `PYTHON 3.12` and `Ln 1, Col 1`; a thin cyan focus line beneath active tabs and controls.
+**Signature Elements:** A crunchy cookie mark in the Crunch wordmark; tiny telemetry labels such as `PYTHON 3.12` and `Ln 1, Col 1`; a thin cyan focus line beneath active tabs and controls.
 
 **Interaction Philosophy:** Every action gives immediate, compact feedback through active states, a toast, a changed status readout, or output. Keyboard-first behavior is primary; buttons remain discoverable for new users.
 
@@ -48,7 +48,7 @@ Build a browser-based custom code editor focused on Python, inspired by the prod
 
 **Brand Voice:** Headings are short and confident; CTAs describe the action. Example lines: “Shape the next file.” and “Run a quick preview.”
 
-**Wordmark & Logo:** `CodeForge` paired with a four-point spark made from two offset code brackets and a cyan center node, suggesting code being forged into a working tool.
+**Wordmark & Logo:** `Crunch` paired with a golden cookie cracking into two pieces, suggesting ideas breaking into executable code.
 
 **Signature Brand Color:** Forge Cyan (#74d6d0).
 
