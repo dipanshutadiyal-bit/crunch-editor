@@ -19,7 +19,6 @@ const state = {
 
 const $ = (selector) => document.querySelector(selector);
 const editor = $("#editor");
-const highlighted = $("#highlighted code");
 const lineNumbers = $("#lineNumbers");
 const minimap = $("#minimap");
 const autocomplete = $("#autocomplete");
@@ -27,7 +26,6 @@ const tabs = $("#tabs");
 const fileTree = $("#fileTree");
 const outputLines = $("#outputLines");
 const bottomPanel = $("#bottomPanel");
-let highlightFrame;
 
 function loadFiles() {
   try {
@@ -125,10 +123,6 @@ function renderAll() {
 
 function renderEditor() {
   const source = editor.value;
-  cancelAnimationFrame(highlightFrame);
-  highlightFrame = requestAnimationFrame(() => {
-    highlighted.innerHTML = highlight(source) + (source.endsWith("\n") ? "\n" : "");
-  });
   const totalLines = Math.max(1, source.split("\n").length);
   lineNumbers.innerHTML = Array.from({ length: totalLines }, (_, index) => `<div>${index + 1}</div>`).join("");
   renderMinimap(source);
@@ -172,7 +166,6 @@ function renderMinimap(source) {
 }
 
 function syncScroll() {
-  highlighted.parentElement.style.transform = `translate(${-editor.scrollLeft}px, ${-editor.scrollTop}px)`;
   lineNumbers.style.transform = `translateY(${-editor.scrollTop}px)`;
 }
 
@@ -257,6 +250,12 @@ function handleKeydown(event) {
   }
   if (["(", "[", "{", "\"", "'"].includes(event.key) && editor.selectionStart === editor.selectionEnd) {
     const pair = { "(": ")", "[": "]", "{": "}", "\"": "\"", "'": "'" }[event.key];
+    if (editor.value[editor.selectionStart] === pair) {
+      event.preventDefault();
+      editor.selectionStart += 1;
+      editor.selectionEnd = editor.selectionStart;
+      return;
+    }
     event.preventDefault();
     editor.setRangeText(event.key + pair, editor.selectionStart, editor.selectionEnd, "end");
     editor.selectionStart -= 1;
