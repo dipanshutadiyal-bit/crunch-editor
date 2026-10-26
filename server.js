@@ -65,7 +65,8 @@ const server = createServer(async (req, res) => {
       try {
         const { code } = JSON.parse(await readBody(req));
         if (typeof code !== "string") return sendJson(res, 400, { ok: false, error: "Request must contain Python code." });
-        const result = await runPython("python3", ["-I", "-c", code], {
+        const pythonCommand = process.platform === "win32" ? "python" : "python3";
+        const result = await runPython(pythonCommand, ["-I", "-c", code], {
           timeout: 3000,
           maxBuffer: 256 * 1024,
           env: { ...process.env, PYTHONIOENCODING: "utf-8" }

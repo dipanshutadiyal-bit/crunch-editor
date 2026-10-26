@@ -406,16 +406,32 @@ function createFile() {
   showToast(`${cleanName} created.`);
 }
 
-function saveActiveFile() {
+async function saveActiveFile() {
   if (!state.activeFile) {
     showToast("Create a .py file before saving.");
     return;
   }
   state.files[state.activeFile] = editor.value;
   saveFiles();
+  if (window.crunchDesktop?.saveFile) {
+    const result = await window.crunchDesktop.saveFile(state.activeFile, editor.value);
+    if (!result?.saved) {
+      showToast("Save canceled.");
+      return;
+    }
+    $("#dirtyIndicator").hidden = true;
+    $("#statusMessage").textContent = "File saved to laptop";
+    showToast(`${state.activeFile} saved to your laptop.`);
+    return;
+  }
+  const download = document.createElement("a");
+  download.href = URL.createObjectURL(new Blob([editor.value], { type: "text/x-python" }));
+  download.download = state.activeFile;
+  download.click();
+  URL.revokeObjectURL(download.href);
   $("#dirtyIndicator").hidden = true;
-  $("#statusMessage").textContent = "File saved locally";
-  showToast(`${state.activeFile} saved locally.`);
+  $("#statusMessage").textContent = "File downloaded";
+  showToast(`${state.activeFile} downloaded to your laptop.`);
 }
 
 const commands = [
